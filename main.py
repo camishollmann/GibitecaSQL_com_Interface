@@ -3,12 +3,10 @@ from sqlalchemy import create_engine, Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship, sessionmaker, declarative_base
 from sqlalchemy.exc import SQLAlchemyError
 
-# Conexão com o banco de dados
 DATABASE_URL = "mysql+pymysql://root:@localhost/gibis"
 engine = create_engine(DATABASE_URL)
 Base = declarative_base()
 
-# Modelos das Tabelas
 class Gibi(Base):
     __tablename__ = 'gibis'
     id = Column(Integer, primary_key=True, nullable=False, autoincrement=True, unique=True)
@@ -54,7 +52,6 @@ Base.metadata.create_all(engine)
 Session = sessionmaker(bind=engine)
 session = Session()
 
-# Funções CRUD com validação e tratamento de exceções
 def add_editora(nome, cidade):
     try:
         if not nome or not cidade:
@@ -128,7 +125,6 @@ def delete_gibi(gibi_id):
         session.rollback()
         print(f"Erro ao deletar gibi: {e}")
 
-# Funções de listagem
 def list_gibis():
     try:
         gibis = session.query(Gibi).all()
@@ -161,7 +157,6 @@ def list_categorias():
         session.rollback()
         print(f"Erro ao listar categorias: {e}")
 
-# Interface Gráfica com PyQt5 e Abas
 class GibiApp(QWidget):
     def __init__(self):
         super().__init__()
@@ -169,27 +164,24 @@ class GibiApp(QWidget):
         self.setWindowTitle("CRUD Gibis")
         self.setGeometry(100, 100, 600, 500)
 
-        # Criando o Tab Widget
         self.tabs = QTabWidget()
 
-        # Criando as abas
         self.gibi_tab = QWidget()
         self.editora_tab = QWidget()
         self.autor_tab = QWidget()
         self.categoria_tab = QWidget()
 
-        # Adicionando as abas ao widget
         self.tabs.addTab(self.gibi_tab, "Gibis")
         self.tabs.addTab(self.editora_tab, "Editoras")
         self.tabs.addTab(self.autor_tab, "Autores")
         self.tabs.addTab(self.categoria_tab, "Categorias")
 
-        # Configurando o layout da aba Gibis
+
         self.gibi_tab_layout = QVBoxLayout()
         form_layout_gibi = QFormLayout()
 
         self.gibi_id_label = QLabel("ID do Gibi:")
-        self.gibi_id_input = QLineEdit()  # Novo campo para o ID do gibi que será atualizado
+        self.gibi_id_input = QLineEdit() 
 
         self.title_label = QLabel("Título:")
         self.title_input = QLineEdit()
@@ -206,7 +198,7 @@ class GibiApp(QWidget):
         self.categoria_label = QLabel("Categoria ID:")
         self.categoria_input = QLineEdit()
 
-        form_layout_gibi.addRow(self.gibi_id_label, self.gibi_id_input)  # Adiciona o novo campo ao layout
+        form_layout_gibi.addRow(self.gibi_id_label, self.gibi_id_input)  
         form_layout_gibi.addRow(self.title_label, self.title_input)
         form_layout_gibi.addRow(self.year_label, self.year_input)
         form_layout_gibi.addRow(self.editora_label, self.editora_input)
@@ -241,7 +233,6 @@ class GibiApp(QWidget):
 
         self.gibi_tab.setLayout(self.gibi_tab_layout)
 
-        # Adicionando as abas ao layout principal
         main_layout = QVBoxLayout()
         main_layout.addWidget(self.tabs)
         self.setLayout(main_layout)
@@ -272,30 +263,30 @@ class GibiApp(QWidget):
             self.gibi_table.setItem(row_index, 5, QTableWidgetItem(str(gibi.categoria_id)))
 
     def update_gibi(self):
-        gibi_id_text = self.gibi_id_input.text()  # Obtém o ID do gibi a partir do novo campo
-        novo_titulo = self.title_input.text()  # Novo título a ser atualizado
+        gibi_id_text = self.gibi_id_input.text()  
+        novo_titulo = self.title_input.text()  
 
-        if not gibi_id_text or not novo_titulo:  # Verifica se os campos estão preenchidos
+        if not gibi_id_text or not novo_titulo:  
             QMessageBox.warning(self, "Erro", "Por favor, preencha o ID do gibi e o novo título.")
             return
 
         try:
-            gibi_id = int(gibi_id_text)  # Converte o ID para inteiro
-            update_gibi(gibi_id, novo_titulo)  # Chama a função de atualização
+            gibi_id = int(gibi_id_text)  
+            update_gibi(gibi_id, novo_titulo) 
             QMessageBox.information(self, "Sucesso", "Gibi atualizado com sucesso!")
         except ValueError:
             QMessageBox.warning(self, "Erro", "ID do gibi deve ser um número inteiro.")
 
     def delete_gibi(self):
-        gibi_id_text = self.gibi_id_input.text()  # Obtém o ID do gibi a ser deletado
+        gibi_id_text = self.gibi_id_input.text()  
 
-        if not gibi_id_text:  # Verifica se o campo do ID está preenchido
+        if not gibi_id_text: 
             QMessageBox.warning(self, "Erro", "Por favor, preencha o ID do gibi a ser deletado.")
             return
 
         try:
-            gibi_id = int(gibi_id_text)  # Converte o ID para inteiro
-            delete_gibi(gibi_id)  # Chama a função de deletar
+            gibi_id = int(gibi_id_text)  
+            delete_gibi(gibi_id)  
             QMessageBox.information(self, "Sucesso", "Gibi deletado com sucesso!")
         except ValueError:
             QMessageBox.warning(self, "Erro", "ID do gibi deve ser um número inteiro.")
