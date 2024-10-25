@@ -1,11 +1,11 @@
-from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QFormLayout, QLineEdit, QPushButton, QLabel, QMessageBox
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QFormLayout, QLineEdit, QPushButton, QLabel, QMessageBox, QTabWidget, QTableWidget, QTableWidgetItem
 from sqlalchemy import create_engine, Column, Integer, String, ForeignKey
 from sqlalchemy.orm import relationship, sessionmaker, declarative_base
 from sqlalchemy.exc import SQLAlchemyError
 
 # Conexão com o banco de dados
 DATABASE_URL = "mysql+pymysql://root:@localhost/gibis"
-engine = create_engine(DATABASE_URL) 
+engine = create_engine(DATABASE_URL)
 Base = declarative_base()
 
 # Modelos das Tabelas
@@ -128,19 +128,66 @@ def delete_gibi(gibi_id):
         session.rollback()
         print(f"Erro ao deletar gibi: {e}")
 
+# Funções de listagem
+def list_gibis():
+    try:
+        gibis = session.query(Gibi).all()
+        return gibis
+    except SQLAlchemyError as e:
+        session.rollback()
+        print(f"Erro ao listar gibis: {e}")
 
-# Interface Gráfica com PyQt5
+def list_autores():
+    try:
+        autores = session.query(Autor).all()
+        return autores
+    except SQLAlchemyError as e:
+        session.rollback()
+        print(f"Erro ao listar autores: {e}")
+
+def list_editoras():
+    try:
+        editoras = session.query(Editora).all()
+        return editoras
+    except SQLAlchemyError as e:
+        session.rollback()
+        print(f"Erro ao listar editoras: {e}")
+
+def list_categorias():
+    try:
+        categorias = session.query(Categoria).all()
+        return categorias
+    except SQLAlchemyError as e:
+        session.rollback()
+        print(f"Erro ao listar categorias: {e}")
+
+# Interface Gráfica com PyQt5 e Abas
 class GibiApp(QWidget):
     def __init__(self):
         super().__init__()
 
         self.setWindowTitle("CRUD Gibis")
-        self.setGeometry(100, 100, 400, 400)  # Aumentando a altura para caber os novos campos
-        
-        layout = QVBoxLayout()
-        form_layout = QFormLayout()
+        self.setGeometry(100, 100, 600, 500)
 
-        # Campos para o Gibi
+        # Criando o Tab Widget
+        self.tabs = QTabWidget()
+
+        # Criando as abas
+        self.gibi_tab = QWidget()
+        self.editora_tab = QWidget()
+        self.autor_tab = QWidget()
+        self.categoria_tab = QWidget()
+
+        # Adicionando as abas ao widget
+        self.tabs.addTab(self.gibi_tab, "Gibis")
+        self.tabs.addTab(self.editora_tab, "Editoras")
+        self.tabs.addTab(self.autor_tab, "Autores")
+        self.tabs.addTab(self.categoria_tab, "Categorias")
+
+        # Configurando o layout da aba Gibis
+        self.gibi_tab_layout = QVBoxLayout()
+        form_layout_gibi = QFormLayout()
+
         self.title_label = QLabel("Título:")
         self.title_input = QLineEdit()
 
@@ -156,139 +203,215 @@ class GibiApp(QWidget):
         self.categoria_label = QLabel("Categoria ID:")
         self.categoria_input = QLineEdit()
 
-        form_layout.addRow(self.title_label, self.title_input)
-        form_layout.addRow(self.year_label, self.year_input)
-        form_layout.addRow(self.editora_label, self.editora_input)
-        form_layout.addRow(self.autor_label, self.autor_input)
-        form_layout.addRow(self.categoria_label, self.categoria_input)
+        form_layout_gibi.addRow(self.title_label, self.title_input)
+        form_layout_gibi.addRow(self.year_label, self.year_input)
+        form_layout_gibi.addRow(self.editora_label, self.editora_input)
+        form_layout_gibi.addRow(self.autor_label, self.autor_input)
+        form_layout_gibi.addRow(self.categoria_label, self.categoria_input)
 
-        # Campos para Editora
+        self.add_gibi_btn = QPushButton("Adicionar Gibi")
+        self.add_gibi_btn.clicked.connect(self.add_gibi)
+
+        # Tabela e botão de listar Gibis
+        self.gibi_table = QTableWidget()
+        self.gibi_table.setColumnCount(6)
+        self.gibi_table.setHorizontalHeaderLabels(["ID", "Título", "Ano", "Editora", "Autor", "Categoria"])
+
+        self.list_gibis_btn = QPushButton("Listar Gibis")
+        self.list_gibis_btn.clicked.connect(self.list_gibis)
+
+        self.gibi_tab_layout.addLayout(form_layout_gibi)
+        self.gibi_tab_layout.addWidget(self.add_gibi_btn)
+        self.gibi_tab_layout.addWidget(self.gibi_table)
+        self.gibi_tab_layout.addWidget(self.list_gibis_btn)
+
+        self.gibi_tab.setLayout(self.gibi_tab_layout)
+
+        # Configurando o layout da aba Editoras
+        self.editora_tab_layout = QVBoxLayout()
+        form_layout_editora = QFormLayout()
+
         self.editora_nome_label = QLabel("Nome da Editora:")
         self.editora_nome_input = QLineEdit()
 
         self.editora_cidade_label = QLabel("Cidade da Editora:")
         self.editora_cidade_input = QLineEdit()
 
-        form_layout.addRow(self.editora_nome_label, self.editora_nome_input)
-        form_layout.addRow(self.editora_cidade_label, self.editora_cidade_input)
+        form_layout_editora.addRow(self.editora_nome_label, self.editora_nome_input)
+        form_layout_editora.addRow(self.editora_cidade_label, self.editora_cidade_input)
 
-        # Campos para Autor
+        self.add_editora_btn = QPushButton("Adicionar Editora")
+        self.add_editora_btn.clicked.connect(self.add_editora)
+
+        # Tabela e botão de listar Editoras
+        self.editora_table = QTableWidget()
+        self.editora_table.setColumnCount(3)
+        self.editora_table.setHorizontalHeaderLabels(["ID", "Nome", "Cidade"])
+
+        self.list_editoras_btn = QPushButton("Listar Editoras")
+        self.list_editoras_btn.clicked.connect(self.list_editoras)
+
+        self.editora_tab_layout.addLayout(form_layout_editora)
+        self.editora_tab_layout.addWidget(self.add_editora_btn)
+        self.editora_tab_layout.addWidget(self.editora_table)
+        self.editora_tab_layout.addWidget(self.list_editoras_btn)
+
+        self.editora_tab.setLayout(self.editora_tab_layout)
+
+        # Configurando o layout da aba Autores
+        self.autor_tab_layout = QVBoxLayout()
+        form_layout_autor = QFormLayout()
+
         self.autor_nome_label = QLabel("Nome do Autor:")
         self.autor_nome_input = QLineEdit()
 
         self.autor_pais_label = QLabel("País de Origem:")
         self.autor_pais_input = QLineEdit()
 
-        form_layout.addRow(self.autor_nome_label, self.autor_nome_input)
-        form_layout.addRow(self.autor_pais_label, self.autor_pais_input)
-
-        # Campos para Categoria
-        self.categoria_nome_label = QLabel("Nome da Categoria:")
-        self.categoria_nome_input = QLineEdit()
-
-        form_layout.addRow(self.categoria_nome_label, self.categoria_nome_input)
-
-        layout.addLayout(form_layout)
-
-        # Botões de CRUD para Gibi
-        self.add_btn = QPushButton("Adicionar Gibi")
-        self.add_btn.clicked.connect(self.add_gibi)
-
-        self.search_btn = QPushButton("Buscar Gibi")
-        self.search_btn.clicked.connect(self.search_gibi)
-
-        self.update_btn = QPushButton("Atualizar Gibi")
-        self.update_btn.clicked.connect(self.update_gibi)
-
-        self.delete_btn = QPushButton("Deletar Gibi")
-        self.delete_btn.clicked.connect(self.delete_gibi)
-
-        layout.addWidget(self.add_btn)
-        layout.addWidget(self.search_btn)
-        layout.addWidget(self.update_btn)
-        layout.addWidget(self.delete_btn)
-
-        # Botões para adicionar Editora, Autor e Categoria
-        self.add_editora_btn = QPushButton("Adicionar Editora")
-        self.add_editora_btn.clicked.connect(self.add_editora)
+        form_layout_autor.addRow(self.autor_nome_label, self.autor_nome_input)
+        form_layout_autor.addRow(self.autor_pais_label, self.autor_pais_input)
 
         self.add_autor_btn = QPushButton("Adicionar Autor")
         self.add_autor_btn.clicked.connect(self.add_autor)
 
+        # Tabela e botão de listar Autores
+        self.autor_table = QTableWidget()
+        self.autor_table.setColumnCount(3)
+        self.autor_table.setHorizontalHeaderLabels(["ID", "Nome", "País"])
+
+        self.list_autores_btn = QPushButton("Listar Autores")
+        self.list_autores_btn.clicked.connect(self.list_autores)
+
+        self.autor_tab_layout.addLayout(form_layout_autor)
+        self.autor_tab_layout.addWidget(self.add_autor_btn)
+        self.autor_tab_layout.addWidget(self.autor_table)
+        self.autor_tab_layout.addWidget(self.list_autores_btn)
+
+        self.autor_tab.setLayout(self.autor_tab_layout)
+
+        # Configurando o layout da aba Categorias
+        self.categoria_tab_layout = QVBoxLayout()
+        form_layout_categoria = QFormLayout()
+
+        self.categoria_nome_label = QLabel("Nome da Categoria:")
+        self.categoria_nome_input = QLineEdit()
+
+        form_layout_categoria.addRow(self.categoria_nome_label, self.categoria_nome_input)
+
         self.add_categoria_btn = QPushButton("Adicionar Categoria")
         self.add_categoria_btn.clicked.connect(self.add_categoria)
 
-        layout.addWidget(self.add_editora_btn)
-        layout.addWidget(self.add_autor_btn)
-        layout.addWidget(self.add_categoria_btn)
+        # Tabela e botão de listar Categorias
+        self.categoria_table = QTableWidget()
+        self.categoria_table.setColumnCount(2)
+        self.categoria_table.setHorizontalHeaderLabels(["ID", "Nome"])
 
-        self.setLayout(layout)
+        self.list_categorias_btn = QPushButton("Listar Categorias")
+        self.list_categorias_btn.clicked.connect(self.list_categorias)
 
+        self.categoria_tab_layout.addLayout(form_layout_categoria)
+        self.categoria_tab_layout.addWidget(self.add_categoria_btn)
+        self.categoria_tab_layout.addWidget(self.categoria_table)
+        self.categoria_tab_layout.addWidget(self.list_categorias_btn)
+
+        self.categoria_tab.setLayout(self.categoria_tab_layout)
+
+        # Layout principal
+        self.main_layout = QVBoxLayout()
+        self.main_layout.addWidget(self.tabs)
+        self.setLayout(self.main_layout)
+
+    # Funções de interação com o banco de dados
     def add_gibi(self):
+        titulo = self.title_input.text()
+        ano = int(self.year_input.text())
+        editora_id = int(self.editora_input.text())
+        autor_id = int(self.autor_input.text())
+        categoria_id = int(self.categoria_input.text())
+
         try:
-            titulo = self.title_input.text()
-            ano = int(self.year_input.text())
-            editora_id = int(self.editora_input.text())
-            autor_id = int(self.autor_input.text())
-            categoria_id = int(self.categoria_input.text())
             add_gibi(titulo, ano, editora_id, autor_id, categoria_id)
             QMessageBox.information(self, "Sucesso", "Gibi adicionado com sucesso!")
-        except ValueError as e:
-            QMessageBox.warning(self, "Erro", f"Erro nos dados inseridos: {e}")
+        except Exception as e:
+            QMessageBox.critical(self, "Erro", str(e))
+
+    def list_gibis(self):
+        gibis = list_gibis()
+        self.gibi_table.setRowCount(0)
+
+        for gibi in gibis:
+            row_position = self.gibi_table.rowCount()
+            self.gibi_table.insertRow(row_position)
+            self.gibi_table.setItem(row_position, 0, QTableWidgetItem(str(gibi.id)))
+            self.gibi_table.setItem(row_position, 1, QTableWidgetItem(gibi.titulo))
+            self.gibi_table.setItem(row_position, 2, QTableWidgetItem(str(gibi.ano)))
+            self.gibi_table.setItem(row_position, 3, QTableWidgetItem(gibi.editora.nome))
+            self.gibi_table.setItem(row_position, 4, QTableWidgetItem(gibi.autor.nome))
+            self.gibi_table.setItem(row_position, 5, QTableWidgetItem(gibi.categoria.nome))
 
     def add_editora(self):
+        nome = self.editora_nome_input.text()
+        cidade = self.editora_cidade_input.text()
+
         try:
-            nome = self.editora_nome_input.text()
-            cidade = self.editora_cidade_input.text()
             add_editora(nome, cidade)
             QMessageBox.information(self, "Sucesso", "Editora adicionada com sucesso!")
-        except ValueError as e:
-            QMessageBox.warning(self, "Erro", f"Erro nos dados inseridos: {e}")
+        except Exception as e:
+            QMessageBox.critical(self, "Erro", str(e))
+
+    def list_editoras(self):
+        editoras = list_editoras()
+        self.editora_table.setRowCount(0)
+
+        for editora in editoras:
+            row_position = self.editora_table.rowCount()
+            self.editora_table.insertRow(row_position)
+            self.editora_table.setItem(row_position, 0, QTableWidgetItem(str(editora.id)))
+            self.editora_table.setItem(row_position, 1, QTableWidgetItem(editora.nome))
+            self.editora_table.setItem(row_position, 2, QTableWidgetItem(editora.cidade))
 
     def add_autor(self):
+        nome = self.autor_nome_input.text()
+        pais_origem = self.autor_pais_input.text()
+
         try:
-            nome = self.autor_nome_input.text()
-            pais_origem = self.autor_pais_input.text()
             add_autor(nome, pais_origem)
             QMessageBox.information(self, "Sucesso", "Autor adicionado com sucesso!")
-        except ValueError as e:
-            QMessageBox.warning(self, "Erro", f"Erro nos dados inseridos: {e}")
+        except Exception as e:
+            QMessageBox.critical(self, "Erro", str(e))
+
+    def list_autores(self):
+        autores = list_autores()
+        self.autor_table.setRowCount(0)
+
+        for autor in autores:
+            row_position = self.autor_table.rowCount()
+            self.autor_table.insertRow(row_position)
+            self.autor_table.setItem(row_position, 0, QTableWidgetItem(str(autor.id)))
+            self.autor_table.setItem(row_position, 1, QTableWidgetItem(autor.nome))
+            self.autor_table.setItem(row_position, 2, QTableWidgetItem(autor.pais_origem))
 
     def add_categoria(self):
+        nome = self.categoria_nome_input.text()
+
         try:
-            nome = self.categoria_nome_input.text()
             add_categoria(nome)
             QMessageBox.information(self, "Sucesso", "Categoria adicionada com sucesso!")
-        except ValueError as e:
-            QMessageBox.warning(self, "Erro", f"Erro nos dados inseridos: {e}")
+        except Exception as e:
+            QMessageBox.critical(self, "Erro", str(e))
 
-    def search_gibi(self):
-        titulo = self.title_input.text()
-        gibi = get_gibi(titulo)
-        if gibi:
-            QMessageBox.information(self, "Gibi Encontrado", f"Título: {gibi.titulo}\nAno: {gibi.ano}")
-        else:
-            QMessageBox.warning(self, "Erro", "Gibi não encontrado.")
+    def list_categorias(self):
+        categorias = list_categorias()
+        self.categoria_table.setRowCount(0)
 
-    def update_gibi(self):
-        try:
-            gibi_id = int(self.title_input.text())
-            novo_titulo = self.year_input.text()
-            update_gibi(gibi_id, novo_titulo)
-            QMessageBox.information(self, "Sucesso", "Gibi atualizado com sucesso!")
-        except ValueError as e:
-            QMessageBox.warning(self, "Erro", f"Erro ao atualizar: {e}")
-
-    def delete_gibi(self):
-        try:
-            gibi_id = int(self.title_input.text())
-            delete_gibi(gibi_id)
-            QMessageBox.information(self, "Sucesso", "Gibi deletado com sucesso!")
-        except ValueError as e:
-            QMessageBox.warning(self, "Erro", f"Erro ao deletar: {e}")
+        for categoria in categorias:
+            row_position = self.categoria_table.rowCount()
+            self.categoria_table.insertRow(row_position)
+            self.categoria_table.setItem(row_position, 0, QTableWidgetItem(str(categoria.id)))
+            self.categoria_table.setItem(row_position, 1, QTableWidgetItem(categoria.nome))
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     app = QApplication([])
     window = GibiApp()
     window.show()
